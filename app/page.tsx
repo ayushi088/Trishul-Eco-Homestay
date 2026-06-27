@@ -3,6 +3,7 @@ import HeroSection from '@/components/hero-section'
 import FeaturedHomestays from '@/components/featured-homestays'
 import WhyChooseTrishul from '@/components/why-choose-trishul'
 import Testimonials from '@/components/testimonials'
+import { PopularDestinations, TravelBlog, FAQSection, Newsletter } from '@/components/landing-sections'
 import Footer from '@/components/footer'
 
 export default function Home() {
@@ -11,9 +12,13 @@ export default function Home() {
       <Navbar />
       <main>
         <HeroSection />
+        <PopularDestinations />
         <FeaturedHomestays />
         <WhyChooseTrishul />
         <Testimonials />
+        <TravelBlog />
+        <FAQSection />
+        <Newsletter />
       </main>
       <Footer />
     </div>

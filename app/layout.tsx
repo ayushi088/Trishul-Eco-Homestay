@@ -1,14 +1,12 @@
 import { ThemeProvider } from '@/components/theme-provider'
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Inter } from 'next/font/google'
+import { BookingProvider } from '@/context/booking-context'
+import AIChatbot from '@/components/ai-chatbot'
 import './globals.css'
 
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
+const inter = Inter({ variable: '--font-sans', subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Trishul Eco Homestays | Himalayan Stays',
@@ -37,8 +35,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   colorScheme: 'light dark',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#0B6B4A' },
-    { media: '(prefers-color-scheme: dark)', color: '#10B981' },
+    { media: '(prefers-color-scheme: light)', color: '#0F8A5F' },
+    { media: '(prefers-color-scheme: dark)', color: '#0B1120' },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -52,10 +50,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased text-foreground bg-background">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
+          <BookingProvider>
+            {children}
+            <AIChatbot />
+          </BookingProvider>
           {process.env.NODE_ENV === 'production' && <Analytics />}
         </ThemeProvider>
       </body>
