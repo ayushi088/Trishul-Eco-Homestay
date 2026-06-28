@@ -100,21 +100,29 @@ A production-ready Airbnb-style booking platform for Himalayan homestays built w
 - Node.js 18+ 
 - pnpm (recommended) or npm
 
-### Installation
+### Running the Full Stack Application
 
+#### 1. Start the Backend API Server
+Navigate to the `backend` folder, install packages, and boot the server on port `5000`:
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd trishul-homestays
-
-# Install dependencies
-pnpm install
-
-# Run development server
-pnpm dev
+cd backend
+npm install
+npm run dev
 ```
 
-The application will be available at `http://localhost:3000`
+#### 2. Start the Frontend Client
+In the project root directory, install and boot the Next.js development server on port `3000`:
+```bash
+# If using pnpm
+pnpm install
+pnpm dev
+
+# Or if using npm
+npm install
+npm run dev
+```
+
+The frontend client will automatically connect to the backend server at `http://localhost:5000`. You can visit the site at `http://localhost:3000`.
 
 ### Build for Production
 

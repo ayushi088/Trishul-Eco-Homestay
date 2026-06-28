@@ -20,11 +20,29 @@ const TABS = [
   { id: 'admin', name: 'Admin Panel', icon: Landmark, role: 'admin' },
 ]
 
+import { 
+  getHomestays, 
+  createHomestay, 
+  updateHomestay, 
+  deleteHomestay, 
+  getBookings, 
+  Homestay, 
+  Booking 
+} from '@/lib/api'
+import { useToast } from '@/components/toast-provider'
+import { Loader2, Trash2 } from 'lucide-react'
+
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [isHostView, setIsHostView] = useState(true) // Toggle host vs guest
   const [lang, setLang] = useState('EN')
+
+  // API Data State
+  const [listings, setListings] = useState<Homestay[]>([])
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(true)
+  const toast = useToast()
 
   // Settings State
   const [twoFa, setTwoFa] = useState(false)
@@ -34,9 +52,16 @@ export default function DashboardPage() {
   // Host Listing Add Form State
   const [listingTitle, setListingTitle] = useState('')
   const [listingPrice, setListingPrice] = useState(2000)
+  const [listingLocation, setListingLocation] = useState('Chopta')
+  const [listingType, setListingType] = useState('Cottage')
+  const [listingGuests, setListingGuests] = useState(4)
   const [kycDoc, setKycDoc] = useState('')
   const [smartPricing, setSmartPricing] = useState(true)
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false)
+
+  // Edit Listing State
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editPrice, setEditPrice] = useState<number>(0)
 
   // Charts simulated tooltip
   const [hoveredRevenue, setHoveredRevenue] = useState<{ day: string; value: number } | null>(null)
@@ -57,6 +82,25 @@ export default function DashboardPage() {
     { label: 'Munsiyari Stay', rate: 92 }
   ]
 
+  // Load Dashboard Data
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true)
+        const dataListings = await getHomestays()
+        setListings(dataListings)
+        const dataBookings = await getBookings()
+        setBookings(dataBookings)
+      } catch (err) {
+        console.error(err)
+        toast.error('Failed to retrieve operations details from backend server.')
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
+
   const generateApiKey = () => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
     let token = 'trishul_live_'
@@ -70,21 +114,87 @@ export default function DashboardPage() {
 
   const handleCopyKey = () => {
     navigator.clipboard.writeText(apiKey)
-    alert('API Key copied to clipboard!')
+    toast.info('API Key copied to clipboard!')
   }
 
-  const handleAddHomestay = (e: React.FormEvent) => {
+  const handleAddHomestay = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!listingTitle || !kycDoc) {
-      alert('Please fill title and attach host KYC document.')
+      toast.error('Please specify a title and provide KYC document reference.')
       return
     }
-    setIsSubmitSuccess(true)
-    setTimeout(() => {
-      setIsSubmitSuccess(false)
+    
+    try {
+      const response = await createHomestay({
+        title: listingTitle,
+        price: listingPrice,
+        location: listingLocation,
+        type: listingType,
+        guests: listingGuests,
+        availability: 'AVAILABLE',
+        amenities: ['WiFi', 'Meals', 'Heating'],
+        image: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&h=400&fit=crop'
+      })
+      
+      toast.success('Listing created successfully! Initiating KYC reviews.')
+      setListings(prev => [...prev, response.data])
       setListingTitle('')
       setKycDoc('')
-    }, 3000)
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.response?.data?.message || 'Failed to submit stay listing.')
+    }
+  }
+
+  const handleStartEdit = (id: string, currentPrice: number) => {
+    setEditingId(id)
+    setEditPrice(currentPrice)
+  }
+
+  const handleSavePrice = async (id: string) => {
+    try {
+      await updateHomestay(id, { price: editPrice })
+      toast.success('Listing price updated successfully.')
+      setListings(prev => prev.map(item => item.id === id ? { ...item, price: editPrice } : item))
+      setEditingId(null)
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.response?.data?.message || 'Failed to save stay details.')
+    }
+  }
+
+  const handleDeleteListing = async (id: string) => {
+    if (!window.confirm('Are you sure you want to remove this homestay listing?')) return
+    try {
+      await deleteHomestay(id)
+      toast.success('Homestay listing removed successfully.')
+      setListings(prev => prev.filter(item => item.id !== id))
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.response?.data?.message || 'Failed to delete listing.')
+    }
+  }
+
+  const handleDownloadCsv = () => {
+    if (bookings.length === 0) {
+      toast.info('No bookings available to export.')
+      return
+    }
+    const headers = ['ID', 'Guest Name', 'Guest Email', 'Guest Phone', 'Homestay', 'Check In', 'Check Out', 'Guests', 'Payout', 'Status']
+    const rows = bookings.map(b => [
+      b.id, b.guestName, b.guestEmail, b.guestPhone, b.homestayName, b.checkIn, b.checkOut, b.guests, `₹${b.totalPrice}`, b.status || 'Confirmed'
+    ])
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', 'trishul_bookings_export.csv')
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success('Bookings logs downloaded successfully.')
   }
 
   // Translation mapping
@@ -377,7 +487,7 @@ export default function DashboardPage() {
               >
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-extrabold text-foreground">Active Bookings</h2>
-                  <button className="px-3.5 py-2 border border-border bg-card rounded-xl text-xs font-bold hover:bg-muted text-foreground flex items-center gap-1.5 shadow-sm">
+                  <button onClick={handleDownloadCsv} className="px-3.5 py-2 border border-border bg-card rounded-xl text-xs font-bold hover:bg-muted text-foreground flex items-center gap-1.5 shadow-sm">
                     <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                     <span>Download CSV Logs</span>
                   </button>
@@ -396,29 +506,33 @@ export default function DashboardPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border text-xs sm:text-sm">
-                        {[
-                          { name: 'John Doe', stay: 'Mountain View cottage', dates: 'July 15 - July 18', total: '₹8,500', status: 'Confirmed' },
-                          { name: 'Priya Verma', stay: 'Forest Retreat Lodge', dates: 'Aug 04 - Aug 06', total: '₹5,600', status: 'Pending Approval' },
-                          { name: 'Mark Wood', stay: 'Alpine Dreams cabin', dates: 'June 20 - June 24', total: '₹14,200', status: 'Completed' },
-                        ].map((row, idx) => (
-                          <tr key={idx} className="hover:bg-muted/10">
-                            <td className="py-4 px-6 font-bold text-foreground">{row.name}</td>
-                            <td className="py-4 px-6 text-muted-foreground font-semibold">{row.stay}</td>
-                            <td className="py-4 px-6 text-muted-foreground font-semibold">{row.dates}</td>
-                            <td className="py-4 px-6 font-extrabold text-primary">{row.total}</td>
-                            <td className="py-4 px-6">
-                              <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                row.status === 'Confirmed'
-                                  ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/25'
-                                  : row.status === 'Completed'
-                                  ? 'bg-indigo-500/10 text-indigo-600 border border-indigo-500/25'
-                                  : 'bg-amber-500/10 text-amber-600 border border-amber-500/25'
-                              }`}>
-                                {row.status}
-                              </span>
+                        {bookings.length > 0 ? (
+                          bookings.map((row, idx) => (
+                            <tr key={idx} className="hover:bg-muted/10">
+                              <td className="py-4 px-6 font-bold text-foreground">{row.guestName}</td>
+                              <td className="py-4 px-6 text-muted-foreground font-semibold">{row.homestayName}</td>
+                              <td className="py-4 px-6 text-muted-foreground font-semibold">{row.checkIn} - {row.checkOut}</td>
+                              <td className="py-4 px-6 font-extrabold text-primary">₹{row.totalPrice}</td>
+                              <td className="py-4 px-6">
+                                <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                  row.status === 'Confirmed'
+                                    ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/25'
+                                    : row.status === 'Completed'
+                                    ? 'bg-indigo-500/10 text-indigo-600 border border-indigo-500/25'
+                                    : 'bg-amber-500/10 text-amber-600 border border-amber-500/25'
+                                }`}>
+                                  {row.status || 'Confirmed'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={5} className="py-8 text-center text-muted-foreground font-semibold">
+                              No active bookings registered in backend system yet.
                             </td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -511,6 +625,61 @@ export default function DashboardPage() {
                     )}
                   </AnimatePresence>
                 </form>
+
+                {/* Active Listings Table */}
+                <div className="mt-12 space-y-4 pt-8 border-t border-border">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Current Active Listings</h3>
+                  <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-muted/40 border-b border-border text-[10px] font-bold text-muted-foreground uppercase">
+                          <th className="py-3 px-4">Title</th>
+                          <th className="py-3 px-4">Location</th>
+                          <th className="py-3 px-4">Type</th>
+                          <th className="py-3 px-4">Price / Night</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border text-xs">
+                        {listings.map((stay) => (
+                          <tr key={stay.id} className="hover:bg-muted/10">
+                            <td className="py-3.5 px-4 font-bold text-foreground">{stay.title}</td>
+                            <td className="py-3.5 px-4 text-muted-foreground font-semibold">{stay.location}</td>
+                            <td className="py-3.5 px-4 text-muted-foreground font-semibold">{stay.type}</td>
+                            <td className="py-3.5 px-4 font-semibold text-foreground">
+                              {editingId === stay.id ? (
+                                <div className="flex items-center gap-1.5">
+                                  <input
+                                    type="number"
+                                    value={editPrice}
+                                    onChange={(e) => setEditPrice(parseInt(e.target.value))}
+                                    className="w-16 px-1.5 py-1 border border-border bg-input rounded text-xs focus:outline-none"
+                                  />
+                                  <button onClick={() => handleSavePrice(stay.id)} className="text-[10px] bg-primary text-white px-2 py-1 rounded font-bold shadow-sm">Save</button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span>₹{stay.price}</span>
+                                  <button onClick={() => handleStartEdit(stay.id, stay.price)} className="text-[10px] text-primary font-bold hover:underline">Edit</button>
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                onClick={() => handleDeleteListing(stay.id)}
+                                className="text-red-500 hover:text-red-700 p-1 hover:bg-red-500/10 rounded-lg transition-colors inline-flex items-center"
+                                title="Delete Stay"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
               </motion.div>
             )}
 

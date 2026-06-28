@@ -6,10 +6,13 @@ import Footer from '@/components/footer'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useBooking } from '@/context/booking-context'
 import { Calendar, Users, Home, ArrowRight, ArrowLeft, CheckCircle, ShieldAlert, Sparkles, Receipt, Download, MailCheck, ShieldCheck } from 'lucide-react'
+import { createBooking } from '@/lib/api'
+import { useToast } from '@/components/toast-provider'
 
 export default function BookPage() {
   const { booking, updateBooking, resetBooking } = useBooking()
   const [step, setStep] = useState(1)
+  const toast = useToast()
 
   // Step 1 Form Data
   const [fullName, setFullName] = useState(booking.guestName || '')
@@ -67,18 +70,35 @@ export default function BookPage() {
   }
 
   // Handle Stripe mock checkout
-  const handleCheckout = (e: React.FormEvent) => {
+  const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsProcessing(true)
-    setTimeout(() => {
-      setIsProcessing(false)
+    try {
+      await createBooking({
+        guestName: fullName,
+        guestEmail: email,
+        guestPhone: phone,
+        homestayId: booking.homestayId || '1',
+        homestayName: booking.homestayName || 'Mountain View Villa',
+        checkIn: booking.checkIn || checkIn,
+        checkOut: booking.checkOut || checkOut,
+        guests: parseInt(guests) || 2,
+        totalPrice: finalTotal
+      })
+      
       setStep(4)
       updateBooking({
         guestName: fullName,
         guestEmail: email,
         guestPhone: phone,
       })
-    }, 2000)
+      toast.success('Himalayan booking authorized and confirmed successfully!')
+    } catch (err) {
+      console.error(err)
+      toast.error('Payment processed, but reservation registration failed on the server.')
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   const handleDownloadInvoice = () => {

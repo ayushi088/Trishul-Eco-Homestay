@@ -23,128 +23,8 @@ interface HomestayData {
   amenities: string[]
 }
 
-const ALL_HOMESTAYS: HomestayData[] = [
-  {
-    id: '1',
-    title: 'Mountain View Villa',
-    image: 'https://images.unsplash.com/photo-1584488289688-210e890b900d?w=600&h=400&fit=crop',
-    price: 2500,
-    rating: 4.8,
-    reviews: 156,
-    guests: 6,
-    location: 'Chopta',
-    availability: 'AVAILABLE',
-    bedrooms: 3,
-    bathrooms: 2,
-    type: 'Villa',
-    amenities: ['WiFi', 'Meals', 'Heating', 'Fireplace'],
-  },
-  {
-    id: '2',
-    title: 'Cozy Valley Homestay',
-    image: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&h=400&fit=crop',
-    price: 1800,
-    rating: 4.9,
-    reviews: 243,
-    guests: 4,
-    location: 'Auli',
-    availability: 'POPULAR',
-    bedrooms: 2,
-    bathrooms: 1,
-    type: 'Cabin',
-    amenities: ['WiFi', 'Meals', 'Fireplace'],
-  },
-  {
-    id: '3',
-    title: 'Himalayan Retreat',
-    image: 'https://images.unsplash.com/photo-1571896349842-33c89424e492?w=600&h=400&fit=crop',
-    price: 3200,
-    rating: 4.7,
-    reviews: 89,
-    guests: 8,
-    location: 'Munsiyari',
-    availability: 'BESTSELLER',
-    bedrooms: 4,
-    bathrooms: 3,
-    type: 'Cottage',
-    amenities: ['WiFi', 'Meals', 'Heating', 'Hot Tub'],
-  },
-  {
-    id: '4',
-    title: 'Forest View Cottage',
-    image: 'https://images.unsplash.com/photo-1560448204-e02f7c3ad9d2?w=600&h=400&fit=crop',
-    price: 2000,
-    rating: 4.6,
-    reviews: 134,
-    guests: 5,
-    location: 'Kedarkantha',
-    availability: 'LIMITED',
-    bedrooms: 2,
-    bathrooms: 2,
-    type: 'Cottage',
-    amenities: ['WiFi', 'Meals', 'Heating'],
-  },
-  {
-    id: '5',
-    title: 'Alpine Adventure Lodge',
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop',
-    price: 2800,
-    rating: 4.9,
-    reviews: 198,
-    guests: 7,
-    location: 'Tungnath',
-    availability: 'AVAILABLE',
-    bedrooms: 3,
-    bathrooms: 2,
-    type: 'Lodge',
-    amenities: ['WiFi', 'Meals', 'Heating', 'Fireplace', 'Hot Tub'],
-  },
-  {
-    id: '6',
-    title: 'Valley Dreams Homestay',
-    image: 'https://images.unsplash.com/photo-1578992260653-f73603797146?w=600&h=400&fit=crop',
-    price: 1500,
-    rating: 4.5,
-    reviews: 78,
-    guests: 3,
-    location: 'Pauri',
-    availability: 'AVAILABLE',
-    bedrooms: 1,
-    bathrooms: 1,
-    type: 'Cabin',
-    amenities: ['Meals'],
-  },
-  {
-    id: '7',
-    title: 'Stone Valley Resort',
-    image: 'https://images.unsplash.com/photo-1578974595617-7ec5243b359f?w=600&h=400&fit=crop',
-    price: 3500,
-    rating: 4.8,
-    reviews: 112,
-    guests: 10,
-    location: 'Auli',
-    availability: 'POPULAR',
-    bedrooms: 5,
-    bathrooms: 4,
-    type: 'Villa',
-    amenities: ['WiFi', 'Meals', 'Heating', 'Hot Tub'],
-  },
-  {
-    id: '8',
-    title: 'Mountain Echo Stay',
-    image: 'https://images.unsplash.com/photo-1486046281750-441018d9b21f?w=600&h=400&fit=crop',
-    price: 2200,
-    rating: 4.7,
-    reviews: 145,
-    guests: 5,
-    location: 'Chopta',
-    availability: 'LIMITED',
-    bedrooms: 2,
-    bathrooms: 2,
-    type: 'Cottage',
-    amenities: ['WiFi', 'Meals', 'Heating', 'Fireplace'],
-  },
-]
+import { getHomestays, searchHomestays, Homestay } from '@/lib/api'
+import { useToast } from '@/components/toast-provider'
 
 export default function HomestaysPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -155,28 +35,45 @@ export default function HomestaysPage() {
   const [selectedType, setSelectedType] = useState('')
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
   
-  const [isLoading, setIsLoading] = useState(false)
+  const [dbHomestays, setDbHomestays] = useState<Homestay[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [visibleStays, setVisibleStays] = useState(6)
   const [isScrollLoading, setIsScrollLoading] = useState(false)
   
   // Compare State
   const [compareIds, setCompareIds] = useState<string[]>([])
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false)
+  const toast = useToast()
 
-  // Simulation loading on filter changes
+  // Fetch homestays dynamically
   useEffect(() => {
-    setIsLoading(true)
-    const timeout = setTimeout(() => setIsLoading(false), 500)
-    return () => clearTimeout(timeout)
-  }, [searchTerm, priceRange, selectedLocation, sortBy, selectedType, selectedAmenities])
+    async function loadListings() {
+      try {
+        setIsLoading(true)
+        let data: Homestay[] = []
+        if (searchTerm) {
+          data = await searchHomestays(searchTerm)
+        } else {
+          data = await getHomestays(selectedLocation)
+        }
+        setDbHomestays(data)
+      } catch (err) {
+        console.error(err)
+        toast.error('Failed to connect to backend server. Make sure it is running.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadListings()
+  }, [searchTerm, selectedLocation])
 
   // Get distinct values
-  const locations = Array.from(new Set(ALL_HOMESTAYS.map((h) => h.location)))
-  const propertyTypes = Array.from(new Set(ALL_HOMESTAYS.map((h) => h.type)))
+  const locations = Array.from(new Set(dbHomestays.map((h) => h.location)))
+  const propertyTypes = Array.from(new Set(dbHomestays.map((h) => h.type)))
   const allAmenities = ['WiFi', 'Meals', 'Heating', 'Fireplace', 'Hot Tub']
 
   // Filter Logic
-  let filtered = ALL_HOMESTAYS.filter((homestay) => {
+  let filtered = dbHomestays.filter((homestay) => {
     const matchesSearch =
       homestay.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       homestay.location.toLowerCase().includes(searchTerm.toLowerCase())
@@ -201,6 +98,9 @@ export default function HomestaysPage() {
     filtered.sort((a, b) => b.rating - a.rating)
   }
 
+  // Get compared listings from dbHomestays
+  const comparedStays = dbHomestays.filter(h => compareIds.includes(h.id))
+  
   const handleAmenityChange = (amenity: string) => {
     setSelectedAmenities(prev =>
       prev.includes(amenity) ? prev.filter(a => a !== amenity) : [...prev, amenity]
@@ -230,7 +130,6 @@ export default function HomestaysPage() {
     }, 1000)
   }
 
-  const comparedStays = ALL_HOMESTAYS.filter(h => compareIds.includes(h.id))
 
   return (
     <div className="min-h-screen bg-background">

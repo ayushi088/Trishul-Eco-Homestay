@@ -1,0 +1,227 @@
+{
+  "info": {
+    "_postman_id": "8f2b3c76-d41a-4c2d-98e3-4f92d18471b0",
+    "name": "Trishul Eco Homestays API - Week 4",
+    "description": "Postman collection containing all required REST endpoints for Week 4 including Homestay CRUD, Search, and Bookings operations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/health",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get All Homestays",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/homestays",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "homestays"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Search Homestays",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/homestays/search?q=Chopta",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "homestays",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "q",
+              "value": "Chopta"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Homestay by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/homestays/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "homestays",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Homestay Listing",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Kedarnath View Cottage\",\n  \"price\": 2200,\n  \"location\": \"Kedarkantha\",\n  \"type\": \"Cottage\",\n  \"guests\": 4,\n  \"availability\": \"AVAILABLE\",\n  \"amenities\": [\"WiFi\", \"Meals\", \"Heating\"]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/homestays",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "homestays"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Homestay Listing",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"price\": 2400,\n  \"availability\": \"LIMITED\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/homestays/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "homestays",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Homestay Listing",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/homestays/8",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "homestays",
+            "8"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Booking",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"guestName\": \"John Doe\",\n  \"guestEmail\": \"john.doe@gmail.com\",\n  \"guestPhone\": \"+919876543210\",\n  \"homestayId\": \"1\",\n  \"homestayName\": \"Mountain View Villa\",\n  \"checkIn\": \"2026-07-15\",\n  \"checkOut\": \"2026-07-18\",\n  \"guests\": 2,\n  \"totalPrice\": 8500\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/bookings",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "bookings"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Bookings Logs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/bookings",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "bookings"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

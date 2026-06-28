@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { BookingProvider } from '@/context/booking-context'
+import { ToastProvider } from '@/components/toast-provider'
 import AIChatbot from '@/components/ai-chatbot'
 import './globals.css'
 
@@ -53,10 +54,12 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased text-foreground bg-background">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <BookingProvider>
-            {children}
-            <AIChatbot />
-          </BookingProvider>
+          <ToastProvider>
+            <BookingProvider>
+              {children}
+              <AIChatbot />
+            </BookingProvider>
+          </ToastProvider>
           {process.env.NODE_ENV === 'production' && <Analytics />}
         </ThemeProvider>
       </body>

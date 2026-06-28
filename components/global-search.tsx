@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Mic, History, Sparkles, MapPin, X, Laptop } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { searchHomestays } from '@/lib/api'
 
 interface SearchResult {
   id: string
@@ -50,14 +51,22 @@ export default function GlobalSearch({ isOpen, onClose }: { isOpen: boolean; onC
     }
 
     setIsLoading(true)
-    const timeout = setTimeout(() => {
-      const filtered = mockDatabase.filter(
-        (item) =>
-          item.title.toLowerCase().includes(query.toLowerCase()) ||
-          (item.subtitle && item.subtitle.toLowerCase().includes(query.toLowerCase()))
-      )
-      setResults(filtered)
-      setIsLoading(false)
+    const timeout = setTimeout(async () => {
+      try {
+        const data = await searchHomestays(query)
+        const formatted = data.map(item => ({
+          id: item.id,
+          title: item.title,
+          category: 'homestays' as const,
+          url: `/homestays/${item.id}`,
+          subtitle: item.location
+        }))
+        setResults(formatted)
+      } catch (err) {
+        console.error('Search error:', err)
+      } finally {
+        setIsLoading(false)
+      }
     }, 300)
 
     return () => clearTimeout(timeout)

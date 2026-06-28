@@ -78,10 +78,35 @@ const HOMESTAY_DETAILS = {
   ],
 }
 
+import { getHomestayById, Homestay } from '@/lib/api'
+import { useToast } from '@/components/toast-provider'
+import { Loader2 } from 'lucide-react'
+
 export default function HomestayDetailsPage() {
   const params = useParams()
   const router = useRouter()
   const { booking, updateBooking } = useBooking()
+
+  const [homestay, setHomestay] = useState<Homestay | null>(null)
+  const [loading, setLoading] = useState(true)
+  const toast = useToast()
+
+  useEffect(() => {
+    async function loadData() {
+      if (!params?.id) return
+      try {
+        setLoading(true)
+        const data = await getHomestayById(params.id as string)
+        setHomestay(data)
+      } catch (err) {
+        console.error(err)
+        toast.error('Failed to load homestay details from the backend.')
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [params?.id])
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isFavorited, setIsFavorited] = useState(false)
@@ -95,6 +120,99 @@ export default function HomestayDetailsPage() {
   const [checkIn, setCheckIn] = useState(booking.checkIn ? new Date(booking.checkIn).toISOString().split('T')[0] : '')
   const [checkOut, setCheckOut] = useState(booking.checkOut ? new Date(booking.checkOut).toISOString().split('T')[0] : '')
   const [guests, setGuests] = useState(booking.guests ? booking.guests.toString() : '2')
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col justify-between">
+        <Navbar />
+        <div className="flex-grow flex flex-col items-center justify-center py-20 gap-3">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <p className="text-sm text-muted-foreground font-semibold">Loading details...</p>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (!homestay) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col justify-between">
+        <Navbar />
+        <div className="flex-grow flex flex-col items-center justify-center py-20">
+          <p className="text-lg font-bold text-foreground">Homestay not found</p>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  const HOMESTAY_DETAILS = {
+    id: homestay.id,
+    title: homestay.title,
+    location: `${homestay.location}, Uttarakhand`,
+    price: homestay.price,
+    rating: homestay.rating,
+    reviews: homestay.reviews,
+    guests: homestay.guests,
+    bedrooms: homestay.bedrooms,
+    bathrooms: homestay.bathrooms,
+    description: `Experience the breathtaking beauty of the Himalayas in our cozy ${homestay.type.toLowerCase()}. Located in the heart of ${homestay.location}, this homestay offers stunning views, warm hospitality, and authentic Himalayan cuisine.`,
+    images: [
+      homestay.image,
+      'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&h=800&fit=crop',
+      'https://images.unsplash.com/photo-1571896349842-33c89424e492?w=1200&h=800&fit=crop',
+    ],
+    amenities: homestay.amenities.map(name => {
+      let icon = Compass
+      if (name.toLowerCase() === 'wifi') icon = Wifi
+      if (name.toLowerCase() === 'heating') icon = Wind
+      if (name.toLowerCase() === 'meals') icon = Utensils
+      if (name.toLowerCase() === 'fireplace') icon = Tv
+      if (name.toLowerCase() === 'hot tub') icon = Heart
+      return { icon, name }
+    }),
+    rules: [
+      'Check-in: 12:00 PM',
+      'Check-out: 11:00 AM',
+      'No loud parties after 10 PM',
+      'Pets allowed upon prior notice',
+      'Smoking permitted in outdoor garden only',
+    ],
+    host: {
+      name: 'Rajesh Kumar',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=rajesh',
+      verified: true,
+      joined: 'Joined in 2021',
+      rate: '100% Response Rate',
+      time: 'Response Time: < 1 hour',
+      desc: 'Local mountaineer and nature lover. I love sharing traditional Garhwali meals and stories of our mountains with guests.'
+    },
+    attractions: [
+      { name: 'Tungnath Temple Trek', distance: '4.5 km away' },
+      { name: 'Deoriatal Lake Hike', distance: '12 km away' },
+      { name: 'Kanchula Kharak Sanctuary', distance: '6 km away' },
+    ],
+    reviews_list: [
+      {
+        id: 1,
+        name: 'Sarah Johnson',
+        rating: 5,
+        text: 'Amazing place! The host Rajesh was very welcoming and the views of Chaukhamba peaks from the room window were spectacular. Daily Mandua roti and local ghee dinner was the highlight!',
+        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
+        date: 'June 2026',
+        helpful: 24,
+      },
+      {
+        id: 2,
+        name: 'Rahul Patel',
+        rating: 4.8,
+        text: 'Beautiful location, great hosts, and extremely cozy room heaters. The WiFi was surprisingly fast and reliable for working remotely in the mountains.',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+        date: 'May 2026',
+        helpful: 18,
+      },
+    ],
+  }
 
   // Calculate pricing breakdown
   const nightlyPrice = HOMESTAY_DETAILS.price
