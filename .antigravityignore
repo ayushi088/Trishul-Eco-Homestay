@@ -1,0 +1,4 @@
+# Ignore files for ripgrep
+node_modules/
+.next/
+backend/mongodb_data/

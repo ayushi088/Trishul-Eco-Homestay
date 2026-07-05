@@ -12,7 +12,12 @@
     "bedrooms": 3,
     "bathrooms": 2,
     "type": "Villa",
-    "amenities": ["WiFi", "Meals", "Heating", "Fireplace"]
+    "amenities": [
+      "WiFi",
+      "Meals",
+      "Heating",
+      "Fireplace"
+    ]
   },
   {
     "id": "2",
@@ -27,7 +32,11 @@
     "bedrooms": 2,
     "bathrooms": 1,
     "type": "Cabin",
-    "amenities": ["WiFi", "Meals", "Fireplace"]
+    "amenities": [
+      "WiFi",
+      "Meals",
+      "Fireplace"
+    ]
   },
   {
     "id": "3",
@@ -42,7 +51,12 @@
     "bedrooms": 4,
     "bathrooms": 3,
     "type": "Cottage",
-    "amenities": ["WiFi", "Meals", "Heating", "Hot Tub"]
+    "amenities": [
+      "WiFi",
+      "Meals",
+      "Heating",
+      "Hot Tub"
+    ]
   },
   {
     "id": "4",
@@ -57,7 +71,11 @@
     "bedrooms": 2,
     "bathrooms": 2,
     "type": "Cottage",
-    "amenities": ["WiFi", "Meals", "Heating"]
+    "amenities": [
+      "WiFi",
+      "Meals",
+      "Heating"
+    ]
   },
   {
     "id": "5",
@@ -72,7 +90,13 @@
     "bedrooms": 3,
     "bathrooms": 2,
     "type": "Lodge",
-    "amenities": ["WiFi", "Meals", "Heating", "Fireplace", "Hot Tub"]
+    "amenities": [
+      "WiFi",
+      "Meals",
+      "Heating",
+      "Fireplace",
+      "Hot Tub"
+    ]
   },
   {
     "id": "6",
@@ -87,7 +111,9 @@
     "bedrooms": 1,
     "bathrooms": 1,
     "type": "Cabin",
-    "amenities": ["Meals"]
+    "amenities": [
+      "Meals"
+    ]
   },
   {
     "id": "7",
@@ -102,7 +128,12 @@
     "bedrooms": 5,
     "bathrooms": 4,
     "type": "Villa",
-    "amenities": ["WiFi", "Meals", "Heating", "Hot Tub"]
+    "amenities": [
+      "WiFi",
+      "Meals",
+      "Heating",
+      "Hot Tub"
+    ]
   },
   {
     "id": "8",
@@ -117,6 +148,11 @@
     "bedrooms": 2,
     "bathrooms": 2,
     "type": "Cottage",
-    "amenities": ["WiFi", "Meals", "Heating", "Fireplace"]
+    "amenities": [
+      "WiFi",
+      "Meals",
+      "Heating",
+      "Fireplace"
+    ]
   }
 ]

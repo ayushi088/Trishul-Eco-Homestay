@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "rbcqsyu",
+    "guestName": "John Doe",
+    "guestEmail": "john.doe@gmail.com",
+    "guestPhone": "+919876543210",
+    "homestayId": "1",
+    "homestayName": "Mountain View Villa",
+    "checkIn": "2026-07-15",
+    "checkOut": "2026-07-18",
+    "guests": 2,
+    "totalPrice": 8500,
+    "status": "Confirmed",
+    "createdAt": "2026-06-28T13:01:14.776Z"
+  }
+]

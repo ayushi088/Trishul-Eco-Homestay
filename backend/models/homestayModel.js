@@ -1,119 +1,65 @@
-import path from 'path'
-import { fileURLToPath } from 'url'
-import { readJSONFile, writeJSONFile } from '../utils/fileHelper.js'
+import mongoose from 'mongoose'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const DB_FILE = path.join(__dirname, '../data/homestays.json')
+const homestaySchema = new mongoose.Schema({
+  _id: { type: String, required: true },
+  title: { type: String, required: true },
+  image: { type: String, required: true },
+  price: { type: Number, required: true },
+  rating: { type: Number, default: 0 },
+  reviews: { type: Number, default: 0 },
+  guests: { type: Number, required: true },
+  location: { type: String, required: true },
+  availability: { type: String, default: 'AVAILABLE' },
+  bedrooms: { type: Number, default: 2 },
+  bathrooms: { type: Number, default: 1 },
+  type: { type: String, required: true },
+  amenities: [{ type: String }]
+}, {
+  id: true,
+  toJSON: {
+    transform: (doc, ret) => {
+      ret.id = ret._id
+      return ret
+    }
+  }
+})
+
+const Homestay = mongoose.model('Homestay', homestaySchema)
 
 class HomestayModel {
   static async getAll() {
-    return await readJSONFile(DB_FILE)
+    return await Homestay.find({})
   }
 
   static async getById(id) {
-    const homestays = await this.getAll()
-    return homestays.find(h => h.id === id)
+    return await Homestay.findById(id)
   }
 
   static async create(data) {
-    const homestays = await this.getAll()
-
-    // Validation checks
-    if (!data.title || !data.location || !data.price || !data.guests || !data.type) {
-      throw new Error('Missing required fields: title, location, price, guests, and type are required')
-    }
-
-    if (isNaN(data.price) || data.price <= 0) {
-      throw new Error('Invalid price: price must be a number greater than 0')
-    }
-
-    if (isNaN(data.guests) || data.guests <= 0) {
-      throw new Error('Invalid guests count: guests limit must be a positive number')
-    }
-
-    // Default values
-    const newHomestay = {
-      id: data.id || Math.random().toString(36).substring(2, 9),
-      title: data.title,
-      image: data.image || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800',
-      price: Number(data.price),
-      rating: Number(data.rating) || 4.5,
-      reviews: Number(data.reviews) || 0,
-      guests: Number(data.guests),
-      location: data.location,
-      availability: data.availability || 'AVAILABLE',
-      bedrooms: Number(data.bedrooms) || 2,
-      bathrooms: Number(data.bathrooms) || 1,
-      type: data.type,
-      amenities: Array.isArray(data.amenities) ? data.amenities : []
-    }
-
-    homestays.push(newHomestay)
-    await writeJSONFile(DB_FILE, homestays)
-    return newHomestay
+    const id = data.id || Math.random().toString(36).substring(2, 9)
+    const newHomestay = new Homestay({ _id: id, ...data })
+    return await newHomestay.save()
   }
 
   static async update(id, data) {
-    const homestays = await this.getAll()
-    const index = homestays.findIndex(h => h.id === id)
-    
-    if (index === -1) {
-      return null
-    }
-
-    // Validate if fields are updated
-    if (data.price && (isNaN(data.price) || data.price <= 0)) {
-      throw new Error('Invalid price: price must be a number greater than 0')
-    }
-    if (data.guests && (isNaN(data.guests) || data.guests <= 0)) {
-      throw new Error('Invalid guests count: guests limit must be a positive number')
-    }
-
-    const updated = {
-      ...homestays[index],
-      title: data.title !== undefined ? data.title : homestays[index].title,
-      location: data.location !== undefined ? data.location : homestays[index].location,
-      image: data.image !== undefined ? data.image : homestays[index].image,
-      price: data.price !== undefined ? Number(data.price) : homestays[index].price,
-      rating: data.rating !== undefined ? Number(data.rating) : homestays[index].rating,
-      reviews: data.reviews !== undefined ? Number(data.reviews) : homestays[index].reviews,
-      guests: data.guests !== undefined ? Number(data.guests) : homestays[index].guests,
-      availability: data.availability !== undefined ? data.availability : homestays[index].availability,
-      bedrooms: data.bedrooms !== undefined ? Number(data.bedrooms) : homestays[index].bedrooms,
-      bathrooms: data.bathrooms !== undefined ? Number(data.bathrooms) : homestays[index].bathrooms,
-      type: data.type !== undefined ? data.type : homestays[index].type,
-      amenities: data.amenities !== undefined ? (Array.isArray(data.amenities) ? data.amenities : []) : homestays[index].amenities
-    }
-
-    homestays[index] = updated
-    await writeJSONFile(DB_FILE, homestays)
-    return updated
+    return await Homestay.findByIdAndUpdate(id, data, { new: true })
   }
 
   static async delete(id) {
-    const homestays = await this.getAll()
-    const exists = homestays.some(h => h.id === id)
-    if (!exists) {
-      return false
-    }
-
-    const filtered = homestays.filter(h => h.id !== id)
-    await writeJSONFile(DB_FILE, filtered)
-    return true
+    const res = await Homestay.findByIdAndDelete(id)
+    return !!res
   }
 
   static async search(query) {
-    const homestays = await this.getAll()
-    if (!query) return homestays
-    
+    if (!query) return await Homestay.find({})
     const term = query.toLowerCase()
-    return homestays.filter(
-      h =>
-        h.title.toLowerCase().includes(term) ||
-        h.location.toLowerCase().includes(term) ||
-        h.type.toLowerCase().includes(term)
-    )
+    return await Homestay.find({
+      $or: [
+        { title: { $regex: term, $options: 'i' } },
+        { location: { $regex: term, $options: 'i' } },
+        { type: { $regex: term, $options: 'i' } }
+      ]
+    })
   }
 }
 

@@ -1,39 +1,27 @@
-import express from 'express'
-import cors from 'cors'
-import dotenv from 'dotenv'
-import homestayRoutes from './routes/homestayRoutes.js'
-import bookingRoutes from './routes/bookingRoutes.js'
-import { notFound, errorHandler } from './middleware/errorMiddleware.js'
+const MONGODB_URI = process.env.MONGODB_URI
 
-// Load environment variables
-dotenv.config()
+async function startServer() {
+  try {
+    if (!MONGODB_URI) {
+      throw new Error('MONGODB_URI environment variable is not defined')
+    }
 
-const app = express()
-const PORT = process.env.PORT || 5000
+    console.log('[Trishul Backend] Connecting to MongoDB Atlas...')
 
-// Configure CORS
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-}))
+    await mongoose.connect(MONGODB_URI)
 
-// JSON Parser
-app.use(express.json())
+    console.log('[Trishul Backend] Connected to MongoDB Atlas successfully')
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ success: true, message: 'Trishul Backend Server is healthy and running.' })
-})
+    await seedDatabase()
 
-// Mount MVC API routes
-app.use('/api/homestays', homestayRoutes)
-app.use('/api/bookings', bookingRoutes)
+    app.listen(PORT, () => {
+      console.log(`[Trishul Backend] Server running on port ${PORT}`)
+    })
 
-// Fallback middlewares for error control
-app.use(notFound)
-app.use(errorHandler)
+  } catch (err) {
+    console.error('[Trishul Backend] Database connection failed:', err.message)
+    process.exit(1)
+  }
+}
 
-app.listen(PORT, () => {
-  console.log(`[Trishul Backend] Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`)
-})
+startServer()

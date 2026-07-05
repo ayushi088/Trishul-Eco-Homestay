@@ -132,15 +132,54 @@ pnpm build
 
 # Start production server
 pnpm start
-```
+## Database Choice & Design
+
+### Why MongoDB?
+We selected **MongoDB** (with Mongoose ODM) for the following architectural reasons:
+1. **Flexible Document Schema:** Homestays can have variable attributes and amenities. Storing them as documents allows quick extension without rigid migrations.
+2. **Native Array Handling:** In Week 4, homestays used an array of strings for `amenities` (e.g., `["WiFi", "Meals", "Heating"]`). MongoDB handles arrays natively, avoiding junction tables required in relational databases.
+3. **Seamless JSON Mapping:** The project transitioned from flat JSON mock database files. MongoDB's BSON structure maps 1:1 with JSON structures, making integration robust.
+
+### Schema Design & Relationships
+Our database consists of two core collections with a **One-to-Many (1:N)** relationship:
+- **Homestay:** Stores information about the homestay listings (title, price, image, amenities, rating, location etc.).
+- **Booking:** Stores guest details, dates, homestay references, status, and total price.
+
+Each `Booking` references a single `Homestay` via the `homestayId` field.
+
+![Trishul Database Schema Diagram](W5_SchemaDiagram_AyushiSaini.png)
+
+---
+
+## Set Up the Database
+
+### Option 1: MongoDB Atlas (Cloud - Recommended)
+1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and sign up for a free tier account.
+2. Create a free shared cluster (`M0` tier).
+3. In **Network Access**, whitelist your IP address (or allow access from anywhere `0.0.0.0/0` for development).
+4. In **Database Access**, create a database user with read and write permissions and note the password.
+5. Click **Connect** → **Drivers** and copy the Connection String (`mongodb+srv://...`).
+6. Paste the connection string as your `MONGODB_URI` in the backend `.env` file.
+
+### Option 2: Local MongoDB Connection
+1. Ensure your local MongoDB server is running on `mongodb://localhost:27017`.
+2. Configure `MONGODB_URI="mongodb://localhost:27017/trishul"` in the backend `.env`.
+3. If no local MongoDB is detected on port `27017`, the backend automatically launches a self-contained in-memory MongoDB database instance (`mongodb-memory-server`) to enable instant out-of-the-box local testing.
+
+---
 
 ## Environment Variables
 
-Create a `.env.local` file with the following variables:
+Create a `.env` file in the `backend` folder with the following variables:
 
 ```env
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/trishul
+# Backend Port and Environment
+PORT=5000
+NODE_ENV=development
+
+# Database Connection (MongoDB URI)
+MONGODB_URI=mongodb://localhost:27017/trishul
+```
 
 # Authentication
 JWT_SECRET=your-secret-key

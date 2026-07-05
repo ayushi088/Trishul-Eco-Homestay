@@ -112,11 +112,8 @@ export async function deleteHomestay(req, res, next) {
       res.status(404)
       throw new Error('Homestay not found to delete')
     }
-    // Return 204 No Content for successful delete, or 200 with JSON
-    res.status(200).json({
-      success: true,
-      message: 'Homestay listing deleted successfully'
-    })
+    // Return 204 No Content for successful delete
+    res.status(204).end()
   } catch (error) {
     next(error)
   }

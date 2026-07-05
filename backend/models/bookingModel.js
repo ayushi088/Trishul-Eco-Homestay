@@ -1,42 +1,42 @@
-import path from 'url'
-import { fileURLToPath } from 'url'
-import pathLib from 'path'
-import { readJSONFile, writeJSONFile } from '../utils/fileHelper.js'
+import mongoose from 'mongoose'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = pathLib.dirname(__filename)
-const DB_FILE = pathLib.join(__dirname, '../data/bookings.json')
+const bookingSchema = new mongoose.Schema({
+  _id: { type: String, required: true },
+  guestName: { type: String, required: true },
+  guestEmail: { type: String, required: true },
+  guestPhone: { type: String, required: true },
+  homestayId: { type: String, required: true },
+  homestayName: { type: String, required: true },
+  checkIn: { type: String, required: true },
+  checkOut: { type: String, required: true },
+  guests: { type: Number, default: 2 },
+  totalPrice: { type: Number, required: true },
+  status: { type: String, default: 'Confirmed' },
+  createdAt: { type: Date, default: Date.now }
+}, {
+  id: true,
+  toJSON: {
+    transform: (doc, ret) => {
+      ret.id = ret._id
+      return ret
+    }
+  }
+})
+
+const Booking = mongoose.model('Booking', bookingSchema)
 
 class BookingModel {
   static async getAll() {
-    return await readJSONFile(DB_FILE)
+    return await Booking.find({}).sort({ createdAt: -1 })
   }
 
   static async create(data) {
-    const bookings = await this.getAll()
-
     if (!data.guestName || !data.guestEmail || !data.guestPhone || !data.checkIn || !data.checkOut) {
       throw new Error('Missing required booking parameters: guestName, guestEmail, guestPhone, checkIn, and checkOut are required')
     }
-
-    const newBooking = {
-      id: Math.random().toString(36).substring(2, 9),
-      guestName: data.guestName,
-      guestEmail: data.guestEmail,
-      guestPhone: data.guestPhone,
-      homestayId: data.homestayId || '1',
-      homestayName: data.homestayName || 'Mountain View Villa',
-      checkIn: data.checkIn,
-      checkOut: data.checkOut,
-      guests: Number(data.guests) || 2,
-      totalPrice: Number(data.totalPrice) || 2500,
-      status: data.status || 'Confirmed',
-      createdAt: new Date().toISOString()
-    }
-
-    bookings.push(newBooking)
-    await writeJSONFile(DB_FILE, bookings)
-    return newBooking
+    const id = data.id || Math.random().toString(36).substring(2, 9)
+    const newBooking = new Booking({ _id: id, ...data })
+    return await newBooking.save()
   }
 }
 
